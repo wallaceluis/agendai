@@ -1,5 +1,7 @@
 # Agendaí
 
+[![CI](https://github.com/wallaceluis/agendai/actions/workflows/ci.yml/badge.svg)](https://github.com/wallaceluis/agendai/actions/workflows/ci.yml)
+
 Agendamento online para salões, barbearias, manicures e estúdios de beleza. O cliente abre o link do estabelecimento, escolhe serviço, profissional e horário, e confirma pelo WhatsApp. O dono acompanha tudo num painel feito para usar no celular, e paga uma assinatura mensal.
 
 | Página de agendamento | Confirmação | Painel |
