@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  business     Business?
+}
+
+model Business {
+  id                 String         @id @default(cuid())
+  ownerId            String         @unique
+  owner              User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name               String
+  slug               String         @unique
+  phone              String // WhatsApp, só dígitos com DDI (ex: 5511999998888)
+  address            String?
+  description        String?
+  color              String         @default("#db2777")
+  slotInterval       Int            @default(30) // minutos entre horários oferecidos
+  minNoticeMinutes   Int            @default(60) // antecedência mínima para agendar
+  maxDaysAhead       Int            @default(30)
+  trialEndsAt        DateTime
+  subscriptionStatus String         @default("trialing") // trialing | active | past_due | canceled
+  subscriptionId     String?        @unique
+  currentPeriodEnd   DateTime?
+  createdAt          DateTime       @default(now())
+  services           Service[]
+  professionals      Professional[]
+  hours              WorkingHour[]
+  bookings           Booking[]
+}
+
+model Service {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  durationMin Int
+  priceCents  Int
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  bookings    Booking[]
+
+  @@index([businessId])
+}
+
+model Professional {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  bookings   Booking[]
+
+  @@index([businessId])
+}
+
+model WorkingHour {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  weekday    Int // 0 = domingo ... 6 = sábado
+  openMin    Int // minutos desde 00:00 (540 = 09:00)
+  closeMin   Int
+  breakStart Int?
+  breakEnd   Int?
+
+  @@unique([businessId, weekday])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  code           String        @unique
+  businessId     String
+  business       Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceId      String
+  service        Service       @relation(fields: [serviceId], references: [id])
+  professionalId String?
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  customerName   String
+  customerPhone  String
+  notes          String?
+  startsAt       DateTime
+  endsAt         DateTime
+  priceCents     Int
+  status         String        @default("pending") // pending | confirmed | completed | canceled | no_show
+  source         String        @default("online") // online | manual
+  createdAt      DateTime      @default(now())
+
+  @@index([businessId, startsAt])
+  @@index([professionalId, startsAt])
+}
